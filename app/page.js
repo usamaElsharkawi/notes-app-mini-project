@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import NoteForm from "@/components/NoteForm";
 import NotesList from "@/components/NotesList";
+import SearchInput from "@/components/SearchInput";
 
 export default function Home() {
   const [title, setTitle] = useState("");
@@ -9,6 +10,19 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [notes, setNotes] = useState([]);
   const [editId, setEditId] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [toast, setToast] = useState(null);
+
+  const filteredNotes = notes.filter(
+    (note) =>
+      note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      note.content.toLowerCase().includes(searchQuery.toLowerCase()),
+  );
+
+  function showToast(message, type = "success") {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  }
 
   async function fetchNotes() {
     try {
@@ -16,7 +30,7 @@ export default function Home() {
       const data = await res.json();
       setNotes(data.notes || []);
     } catch (error) {
-      alert("Failed to fetch notes");
+      showToast("Failed to fetch notes", "error");
     }
   }
 
@@ -28,7 +42,7 @@ export default function Home() {
     e.preventDefault();
 
     if (!title || !content) {
-      alert("Please fill in all the fields");
+      showToast("Please fill in all the fields", "error");
       return;
     }
 
@@ -44,13 +58,13 @@ export default function Home() {
         });
 
         if (res.ok) {
-          alert("Note updated successfully");
+          showToast("Note updated successfully", "success");
           fetchNotes();
         } else {
-          alert("Failed to update note");
+          showToast("Failed to update note", "error");
         }
       } catch (error) {
-        alert("Failed to update note");
+        showToast("Failed to update note", "error");
       } finally {
         setLoading(false);
         setTitle("");
@@ -71,13 +85,13 @@ export default function Home() {
       });
 
       if (res.ok) {
-        alert("Note added successfully");
+        showToast("Note added successfully", "success");
         fetchNotes();
       } else {
-        alert("Failed to add note");
+        showToast("Failed to add note", "error");
       }
     } catch (error) {
-      alert("Failed to add note");
+      showToast("Failed to add note", "error");
     } finally {
       setLoading(false);
       setTitle("");
@@ -106,9 +120,10 @@ export default function Home() {
     });
 
     if (res.ok) {
+      showToast("Note deleted successfully", "success");
       fetchNotes();
     } else {
-      alert("Failed to delete note");
+      showToast("Failed to delete note", "error");
     }
   }
 
@@ -134,14 +149,29 @@ export default function Home() {
           onCancel={handleCancel}
         />
 
+        {/* Search Input */}
+        <SearchInput value={searchQuery} setSearchQuery={setSearchQuery} />
+
         {/* Notes Grid */}
         <NotesList
-          notes={notes}
+          notes={filteredNotes}
           onEdit={handleEditNote}
           onDelete={handleDeleteNote}
         />
       </div>
+
+      {/* Toast Notification */}
+      {toast && (
+        <div
+          className={`fixed bottom-5 right-5 px-4 py-3 rounded-lg shadow-lg border transition-all duration-300 animate-slide-in text-white ${
+            toast.type === "success"
+              ? "bg-emerald-600 border-emerald-500"
+              : "bg-rose-600 border-rose-500"
+          }`}
+        >
+          {toast.message}
+        </div>
+      )}
     </div>
   );
 }
-

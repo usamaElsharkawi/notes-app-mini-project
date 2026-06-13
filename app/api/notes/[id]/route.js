@@ -2,12 +2,11 @@ import connectDB from "@/lib/db";
 import Note from "@/lib/models/Note";
 
 export async function DELETE(req,{params}) {
-    await connectDB();
 
     try {
-        //is this params is a promise,why?
+        await connectDB();
+        
         const {id} = await params;
-        //what does the findByIdAndDelete return?
         const note = await Note.findByIdAndDelete(id);
 
         if (!note) {
